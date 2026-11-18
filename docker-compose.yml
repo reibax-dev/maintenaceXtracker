@@ -42,7 +42,7 @@ services:
     ##* Descarga y usa la imagen oficial de PostgreSQL versión 18 desde Docker Hub
     image: postgres:18
     ##* Nombre fijo para identificar fácilmente el contenedor de la base de datos
-    container_name: postgres
+    container_name: maintracker_postgres
     ##* Reinicia la base de datos automáticamente ante cualquier fallo inesperado
     restart: unless-stopped
     ##* Variables obligatorias para inicializar el usuario, clave y base de datos por primera vez
