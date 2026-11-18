@@ -25,7 +25,7 @@
 14.	El equipo se seleccionará del catálogo. La descripción del trabajo se escribirá en texto libre.
 15.	El sistema permitirá consultar los partes y ver el detalle de uno.
 
-## REQUISITOS NO FUNCIONLES
+## Requisitos no funcionales
 
 Los no funcionales describen cómo debe estar construido y qué condiciones de calidad debe cumplir.
 1.	`Tecnología`: el backend se desarrollará en JavaScript sobre Node.js y Express, con PostgreSQL y Sequelize.
@@ -171,7 +171,7 @@ Respuestas habituales:
 •	403 Forbidden: el usuario no tiene permiso para corregir ese parte.
 •	404 Not Found: no existe un parte con ese ID.
 ```
-1. Cómo encajan con autenticación y autorización
+### 1. Cómo encajan con autenticación y autorización
    
 Las tres rutas requieren que el usuario haya iniciado sesión. El cliente enviaría el token en la cabecera:
 Authorization: Bearer <token>
@@ -186,6 +186,8 @@ router.patch('/partes/:id', authenticate, updateParte)
 Aquí authenticate representa el middleware que valida el token. Cada controlador realizará el trabajo correspondiente. La comprobación de si el parte pertenece al Operario se hará durante la ruta de corrección.
 
 Estas tres rutas cumplen el mínimo de tres endpoints de negocio y dos operaciones que modifican la base de datos (`POST y PATCH`). Como también acordamos que el Administrador gestiona el catálogo, más adelante habrá que añadir rutas para crear y modificar equipos.
+
+## Diagrama de casos de uso
 
 Este diagrama representa los casos de uso que hemos definido. Las acciones de partes se refieren a trabajos ya realizados, sin estados de pendiente o en curso.
 
@@ -234,6 +236,8 @@ Así, las rutas para consultar partes también requieren autenticación. Si algu
 Cómo leerlo: cada actor está conectado con las acciones que puede realizar. Por ejemplo, el Operario puede corregir sus propios partes, mientras que el Administrador puede corregir cualquiera.
 
 Queda por decidir cómo se crea la primera cuenta de Administrador. Por seguridad, el registro público debería crear cuentas de Operario; la cuenta inicial de Administrador se puede preparar por separado.
+
+## Diagrama de clases
 
 Este diagrama muestra las **tres clases principales** y sus relaciones. 
 
@@ -316,6 +320,8 @@ classDiagram
 - El rol de la cuenta (`OPERARIO` o `ADMINISTRADOR`) es distinto del grupo responsable que se anota en el parte.
 
 El `passwordHash` se guarda en la base de datos; la contraseña original no. El ID de cada parte lo generaría PostgreSQL al crearlo.
+
+## Diagrama entidad relación
 
 Aquí tienes el **diagrama entidad-relación** del proyecto. Muestra las tres tablas y sus claves primarias y foráneas:
 
@@ -474,7 +480,8 @@ Con los endpoints de negocio ya hay más de tres rutas y varias modifican la bas
 Los endpoints no son las rutas `EJS`: por ejemplo, `/partes` muestra una página `HTML `en `EJS`, mientras que` /api/partes `devuelve partes en `JSON.`
 
 
-Flujos principales
+## Flujos principales
+
 Estos flujos describen cómo los usuarios interactúan con la API y sus vistas EJS.
 ### 1. Registro e inicio de sesión
 1. El visitante se registra; el sistema crea una cuenta con rol Operario.
@@ -507,6 +514,9 @@ Si el parte no existe, la API responde que no lo encontró. Si el Operario inten
 - Los equipos asociados a partes antiguos se desactivan en vez de borrarse, para conservar el historial.
 Las vistas EJS muestran formularios y páginas HTML; las rutas /api/... realizan las operaciones y responden con JSON
 
+## Diagrama de secuencia de flujos
+
+Aquí tienes los diagramas de secuencia de los flujos principales. Los tres primeros representan la API REST, que responde con JSON; el último muestra una página renderizada con EJS.
 ## 1. Inicio de sesión en la API
 El usuario envía sus credenciales. Si son correctas, recibe un JWT para usarlo en las rutas protegidas.
 ```mermaid
