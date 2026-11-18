@@ -1,0 +1,142 @@
+##! docker-compose.yml (Orquesta tu aplicación y tu base de datos juntos)
+
+  ##* Define los contenedores (servicios) que componen tu aplicación
+services:
+
+  ##* --- SERVICIO 1: TU APLICACIÓN BACKEND (NODE.JS) ---
+  app:
+    ##* Asigna un nombre personalizado al contenedor tomado desde tu archivo .env
+    container_name: ${APP_HOST}
+    ##* Construye la imagen usando el Dockerfile ubicado en esta misma carpeta (.)
+    build: .
+    ##* Reinicia el contenedor automáticamente si falla, salvo que lo detengas manualmente
+    restart: unless-stopped
+    ##* Carga todas las variables de entorno definidas en tu archivo .env dentro del contenedor
+    env_file:
+      - .env
+    ##* Define o sobrescribe variables de entorno específicas para el entorno Docker
+    environment:
+      ##* Nombre del servicio de base de datos (actúa como dirección IP interna en Docker)
+      POSTGRES_HOST: postgres
+      ##* Puerto interno estándar donde escucha PostgreSQL dentro de la red de Docker
+      POSTGRES_PORT: 5432
+      ##* Puerto interno donde tu servidor Node.js escucha peticiones
+      APP_PORT: 3003
+    ##* Conecta el puerto de tu Mac (izquierda) con el puerto interno del contenedor (derecha)
+    ports:
+      - "${APP_PORT}:3003"
+    ##* Sincroniza carpetas entre tu Mac y el contenedor
+    volumes:
+      ##* Sincroniza tu código en tiempo real para que Nodemon detecte cambios (hot-reload)
+      - .:/app
+      ##* Evita que tu carpeta node_modules local sobrescriba la del contenedor Linux
+      - /app/node_modules
+    ##* Controla el orden de arranque entre servicios
+    depends_on:
+      ##* Espera a que el servicio 'postgres' pase su prueba de salud antes de iniciar 'app'
+      postgres:
+        condition: service_healthy
+
+  ##* --- SERVICIO 2: BASE DE DATOS POSTGRESQL ---
+  postgres:
+    ##* Descarga y usa la imagen oficial de PostgreSQL versión 18 desde Docker Hub
+    image: postgres:18
+    ##* Nombre fijo para identificar fácilmente el contenedor de la base de datos
+    container_name: postgres
+    ##* Reinicia la base de datos automáticamente ante cualquier fallo inesperado
+    restart: unless-stopped
+    ##* Variables obligatorias para inicializar el usuario, clave y base de datos por primera vez
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ##* Expone el puerto de PostgreSQL hacia tu Mac por si quieres conectarte desde fuera
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    ##* Gestiona el almacenamiento persistente y la carga inicial de datos
+    volumes:
+      ##* Guarda los datos de PostgreSQL 18 en un volumen permanente para no perderlos al apagar
+      - postgres_data:/var/lib/postgresql/18/docker
+      ##* Ejecuta automáticamente tus scripts .sql la primera vez que se crea la base de datos
+      - ./sql:/docker-entrypoint-initdb.d
+    ##* Prueba periódica para verificar que PostgreSQL ya está listo para aceptar conexiones
+    healthcheck:
+      ##* Comando interno que comprueba el estado de la base de datos
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      ##* Ejecuta esta comprobación cada 5 segundos
+      interval: 5s
+      ##* Tiempo máximo de espera antes de considerar que la comprobación falló
+      timeout: 5s
+      ##* Número de intentos antes de marcar el contenedor como no saludable
+      retries: 5
+
+  ##* --- SERVICIO 3: INTERFAZ VISUAL PARA GESTIONAR LA BASE DE DATOS ---
+  pgadmin:
+    ##* Descarga y usa la imagen oficial de pgAdmin 4
+    image: dpage/pgadmin4
+    ##* Nombre del contenedor tomado desde tu archivo .env
+    container_name: ${PGADMIN_HOST}
+    ##* Reinicia pgAdmin automáticamente si se detiene por error
+    restart: unless-stopped
+    ##* Credenciales de acceso para iniciar sesión en la interfaz web de pgAdmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ##* Conecta el puerto de tu Mac (izquierda) con el puerto web interno 80 de pgAdmin (derecha)
+    ports:
+      - "${PGADMIN_PORT}:80"
+    ##* Asegura que pgAdmin arranque después de que se cree el contenedor de PostgreSQL
+    depends_on:
+      - postgres
+
+##* Declara los volúmenes gestionados por Docker para que los datos sobrevivan aunque borres los contenedores
+volumes:
+  postgres_data:
+
+  # services:
+
+#   app:
+#     container_name: ${APP_HOST}
+#     build: .
+#     restart: unless-stopped
+#     environment:
+#       POSTGRES_HOST: postgres   # dentro de la red de Docker, el host es el nombre del servicio
+#       POSTGRES_PORT: 5432       # dentro de la red de Docker, Postgres siempre escucha en el 5432
+#       APP_PORT: 3003            # el servidor escucha en el 3003 dentro del contenedor (APP_PORT de .env es el puerto del host)
+#     ports:
+#       - "${APP_PORT}:3003"
+#     volumes:
+#       - .:/app
+#       - /app/node_modules
+#     depends_on:
+#       - postgres
+   
+#   postgres:
+#     image: postgres:18
+#     container_name: postgres
+#     restart: unless-stopped
+#     environment:
+#       POSTGRES_USER: ${POSTGRES_USER}
+#       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+#       POSTGRES_DB: ${POSTGRES_DB}
+#     ports:
+#       - "${POSTGRES_PORT}:5432"
+#     volumes:
+#       - postgres_data:/var/lib/postgresql
+#       - ./sql:/docker-entrypoint-initdb.d
+
+#   pgadmin:
+#     image: dpage/pgadmin4
+#     container_name: ${PGADMIN_HOST}
+#     restart: unless-stopped
+#     environment:
+#       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+#       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+#     ports:
+#       - "${PGADMIN_PORT}:80" 
+#     depends_on:
+#       - postgres
+
+# volumes:
+#   node_modules:
+#   postgres_data:

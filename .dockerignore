@@ -1,0 +1,8 @@
+##! .dockerignore (Evita copiar archivos innecesarios o pesados al contenedor)
+
+
+node_modules    ##* Evita copiar las dependencias compiladas en tu Mac (macOS) hacia el contenedor (Linux)
+npm-debug.log   ##* Ignora registros de errores locales innecesarios.
+.env            ##* Protege tus credenciales y variables privadas para que no queden incrustadas dentro de la imagen de Docker.
+.git            ##* Evita copiar todo el historial de versiones dentro del contenedor
+init-db         ##* Evita que la carpeta con tus scripts iniciales de base de datos se copie dentro del contenedor de tu aplicación Node.js
