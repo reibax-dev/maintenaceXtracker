@@ -24,7 +24,7 @@ services:
       APP_PORT: 3003
     ##* Conecta el puerto de tu Mac (izquierda) con el puerto interno del contenedor (derecha)
     ports:
-      - "${APP_PORT}:3003"
+      - "${APP_PORT}:3000"
     ##* Sincroniza carpetas entre tu Mac y el contenedor
     volumes:
       ##* Sincroniza tu código en tiempo real para que Nodemon detecte cambios (hot-reload)
